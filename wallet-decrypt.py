@@ -8,6 +8,32 @@ from Crypto.Cipher import AES
 import wallet_pb2
 
 
+# Save as a file
+def save_file(text, filename="test.htm"):
+    if type(text) != "str":
+        text = str(text)
+    file = open(filename, "w", encoding="utf-8")
+    file.write(text)
+    file.close()
+
+
+# Append as a file
+def append_file(text, filename="output.txt"):
+    if type(text) != "str":
+        text = str(text)
+    file = open(filename, "a", encoding="utf-8")
+    file.write(text)
+    file.close()
+
+
+# Read file
+def read_file(filename="test.htm"):
+    file = open(filename, "r", encoding="utf-8")
+    text = file.read()
+    file.close()
+    return text
+
+
 def derive_key_and_iv(password, salt, key_len, iv_len):
     data = tmp2 = b''
     tmp = password.encode() + salt
@@ -40,20 +66,30 @@ def get_wallet(filename, password):
         return w
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Decrypt Bitcon Wallet (Schildbach''s Bitcoin)')
-    parser.add_argument('filename')
-    parser.add_argument('password')
-
-    args = parser.parse_args()
-
-    w = get_wallet(args.filename, args.password)
+def main(filename, password):
+    w = get_wallet(filename, password)
     for k in w.key:
         if len(k.secret_bytes) > 0 and k.type == 3:
             print("\nYou can enter this information in Electrum/Electrum cash\n")
             print('mnemonic       :', k.secret_bytes.decode())
             print("derivation path: m/0'")
-
+            print(password)
+            return True
+    
+    return False
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Decrypt Bitcon Wallet (Schildbach''s Bitcoin)')
+    parser.add_argument('filename')
+    parser.add_argument('password')
+    args = parser.parse_args()
+
+    with open(args.password, 'r', encoding='utf-8') as file:
+        for line in file:
+            print(".", end="")
+            try:
+                if main(args.filename, line.rstrip('\n')) == True:
+                    append_file(line, f"{args.filename}.log")
+                    break
+            except:
+                pass
